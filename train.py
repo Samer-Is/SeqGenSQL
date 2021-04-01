@@ -38,11 +38,11 @@ def contruct_params(parser):
   parser.add_argument("--weight_decay", default=0.0)
   parser.add_argument("--adam_epsilon", default=1e-8)
   parser.add_argument("--warmup_steps", default=0)
-  parser.add_argument("--train_batch_size", default=32)
-  parser.add_argument("--eval_batch_size", default=32)
+  parser.add_argument("--train_batch_size", default=4)
+  parser.add_argument("--eval_batch_size", default=4)
   parser.add_argument("--num_train_epochs", default=30)
   parser.add_argument("--gradient_accumulation_steps", default=16)
-  parser.add_argument("--gpus", default=0)
+  parser.add_argument("--gpus", default=-1)
   #parser.add_argument("--early_stop_callback", default=False)
   parser.add_argument("--max_grad_norm", default=1.0, help="if you enable 16-bit training then set this to a sensible value, 0.5 is a good default")
   parser.add_argument("--seed", default=42)
@@ -50,7 +50,7 @@ def contruct_params(parser):
   parser.add_argument("--deterministic", default=False)
   parser.add_argument("--auto_scale_batch_size", default=None, help="None|'power'|'binsearch'")
   parser.add_argument("--benchmark", default=True)
-  parser.add_argument("--num_of_workers", default=4)
+  parser.add_argument("--num_of_workers", default=0)
   parser.add_argument("--distributed_backend", default="dp")
   parser.add_argument("--resume_from_checkpoint", default=None)
 
@@ -94,8 +94,8 @@ if __name__ == '__main__':
         args.eval_batch_size = 1
 
     else:
-        args.train_batch_size= 2 * args.n_gpu
-        args.eval_batch_size = 2 * args.n_gpu
+        args.train_batch_size= 1 * args.n_gpu
+        args.eval_batch_size = 1 * args.n_gpu
 
     seed_everything(args.seed)
 

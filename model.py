@@ -105,7 +105,7 @@ class SeqGenSQL(pl.LightningModule):
     outputs = self(
         input_ids=batch["source_ids"],
         attention_mask=batch["source_mask"],
-        labels=lm_labels,
+        lm_labels=lm_labels,
         decoder_attention_mask=batch['target_mask']
     )
     if (self.hparams.use_modified_network):

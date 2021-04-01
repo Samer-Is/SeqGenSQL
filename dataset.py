@@ -8,6 +8,7 @@ import random
 import re
 import copy
 from itertools import chain
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -236,13 +237,13 @@ class WikiSqlDataset(Dataset):
   def _build(self):  
     # load all data from file
     with open(self.table_file) as f:
-        for idx, line in enumerate(f):
+        for idx, line in tqdm(enumerate(f)):
             t1 = json.loads(line.strip())
             self.tables[t1['id']] = t1
             
     with open(self.data_file) as f:
         print("Loading {} ...".format(self.data_file), end="")            
-        for idx, line in enumerate(f):
+        for idx, line in tqdm(enumerate(f)):
             sql = json.loads(line.strip())
             self.data.append(sql)  
 
