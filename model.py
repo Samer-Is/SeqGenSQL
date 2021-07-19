@@ -218,18 +218,24 @@ class SeqGenSQL(pl.LightningModule):
     avg_train_loss = torch.stack([x["loss"] for x in outputs]).mean()
     tensorboard_logs = {"avg_train_loss": avg_train_loss, 
                         "avg_gate_value":torch.mean(torch.nn.Sigmoid()(self.ff_gate.weight))}
+    print("train_loss :" + str(avg_train_loss))
     return {"avg_train_loss": avg_train_loss, "log": tensorboard_logs, 'progress_bar': tensorboard_logs}
 
   def validation_step(self, batch, batch_idx):
     outputs = self._step(batch)
     loss = outputs[0]
-    return {"val_loss": loss}
+    tensorboard_logs = {"val_loss": loss}
+    self.log('val_loss',loss)
+    return {"val_loss": loss, "log": tensorboard_logs}
   
   def validation_epoch_end(self, outputs):
     avg_loss = torch.stack([x["val_loss"] for x in outputs]).mean()
     #avg_loss = torch.stack([x["val_loss"] for x in torch.reshape(outputs, (-1,))]).mean()
-    tensorboard_logs = {"val_loss": avg_loss}
-    return {"avg_val_loss": avg_loss, "log": tensorboard_logs, 'progress_bar': tensorboard_logs}
+    tensorboard_logs = {"val_loss": avg_loss,"avg_val_loss": avg_loss}
+    # New version of pytorchlightning
+    #return {"avg_val_loss": avg_loss,"val_loss": avg_loss, "log": tensorboard_logs, 'progress_bar': tensorboard_logs}
+    print("val_loss : "+ str(avg_loss))
+    self.log("val_loss",avg_loss)
 
   def configure_optimizers(self):
     "Prepare optimizer and schedule (linear warmup and decay)"
@@ -280,6 +286,7 @@ class SeqGenSQL(pl.LightningModule):
 class LoggingCallback(pl.Callback):
   def on_validation_end(self, trainer, pl_module):
     #logger.info("***** Validation results *****")
+    #print("Is_Logger :" + str(pl_module.is_logger())
     if pl_module.is_logger():
       metrics = trainer.callback_metrics
       # Log results
