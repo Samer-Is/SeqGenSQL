@@ -35,7 +35,8 @@ if __name__ == '__main__':
         args.batch_size = 1
 
     model_name = os.path.basename(args.ckpt_path)
-    log_file = '{}/{}.score.log'.format(args.output_dir, model_name.replace("/","_"))
+    log_file = 'logs/error.score.log'
+    match_file = 'logs/match.log'
 
     if not args.silent:
         print("======================================================")
@@ -139,13 +140,19 @@ if __name__ == '__main__':
     # Score
     print("Scoring...", end="")
     f = open(log_file ,"w")
+    mf = open(match_file,"w")
     correct = 0
     incorrect = {"sel_neg":0, "sel_mismatch":0,"agg_neg":0, "agg_mismatch":0, "cond_col_neg":0,"cond_col_mismatch":0,
                 "cond_op_neg":0, "cond_op_mismatch":0,"cond_val_neg":0,"cond_val_mismatch":0}
     for t,d, i in zip(targets, outputs, dataset.data):
         try:
+            d = d.replace('<pad>','').replace('</s>','').strip()
             if t == d:
                 correct += 1
+                mf.write("=================== Matched ==================\n")
+                mf.write("Question: {}\n".format(i['question']))
+                mf.write(f"Pred: {d} \n")
+                mf.write(f"True: {t} \n\n")
             else:
                 pred_lf = dbeng.generate_logical_form(model.tokenizer, d,i['question'],
                                                       dataset.tables,
@@ -153,7 +160,7 @@ if __name__ == '__main__':
                 if pred_lf['sql']!={}:
                     pred_result = dbeng.execute_query(table_id = pred_lf["table_id"], query = pred_lf)
                 else:
-                    f.write("===================== ERROR ========================\n")
+                    f.write("===================== ERROR - Type 1 ========================\n")
                     f.write("Question: {}\n".format(i['question']))
                     f.write("Pred: {} lf: {} RESULT: {}\n".format(d,pred_lf['sql'],pred_result))
                     f.write("True: {} lf: {} RESULT: {}\n\n".format(t, i['sql'], true_result))
@@ -162,8 +169,12 @@ if __name__ == '__main__':
                 true_result = dbeng.execute_query(table_id = i["table_id"], query = i)
                 if (pred_result == true_result):
                     correct += 1
+                    mf.write("=================== Matched ==================\n")
+                    mf.write("Question: {}\n".format(i['question']))
+                    mf.write("Pred: {} lf: {} RESULT: {}\n".format(d))
+                    mf.write("True: {} lf: {} RESULT: {}\n\n".format(t))
                 else:
-                    f.write("===================== ERROR ========================\n")
+                    f.write("===================== ERROR - Type 2 ========================\n")
                     f.write("Question: {}\n".format(i['question']))
                     f.write("Pred: {} lf: {} RESULT: {}\n".format(d,pred_lf['sql'],pred_result))
                     f.write("True: {} lf: {} RESULT: {}\n\n".format(t, i['sql'], true_result))
@@ -181,7 +192,7 @@ if __name__ == '__main__':
                             incorrect['cond_val_neg'] += 1
 
         except:
-            f.write("===================== ERROR ========================\n")
+            f.write("===================== ERROR - Type 3========================\n")
             f.write("Question: {}\n".format(i['question']))
             f.write("Pred: {} lf: {}\n".format(d,pred_lf['sql']))
             f.write("True: {} lf: {}\n\n".format(t, i['sql']))
@@ -200,6 +211,7 @@ if __name__ == '__main__':
                     incorrect['cond_val_neg'] += 1
 
     f.close()
+    mf.close()
     print(incorrect)
     print("Correct: {} Total: {} Ratio:{:.5f} ".format(correct, len(targets), correct/len(targets)))
     print("All Completed!")
